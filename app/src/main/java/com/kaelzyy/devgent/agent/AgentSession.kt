@@ -426,7 +426,7 @@ class AgentSession private constructor(context: Context) {
                 if (stepCalls.isNotEmpty()) {
                     stepsIndex = _state.value.entries.size
                     _state.update { s ->
-                        val steps = stepCalls.map { ChatEntry.ToolSteps.Step(it.tool, "") }
+                        val steps = stepCalls.map { ChatEntry.ToolSteps.Step(it.name, "") }
                         s.copy(entries = s.entries + ChatEntry.ToolSteps(steps))
                     }
                 }
