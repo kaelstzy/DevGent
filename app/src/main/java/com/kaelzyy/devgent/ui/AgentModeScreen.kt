@@ -394,7 +394,7 @@ private fun AgentRow(
 }
 
 @Composable
-private fun CopyGlyph(tint: Color) {
+fun CopyGlyph(tint: Color) {
     Box(modifier = Modifier.size(20.dp)) {
         Box(
             modifier = Modifier

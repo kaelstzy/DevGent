@@ -377,13 +377,29 @@ class LlmClient(private val settings: SettingsRepository) {
                             JSONObject()
                                 .put("name", spec.name)
                                 .put("description", spec.description)
-                                .put("parameters", spec.parameters)
+                                .put("parameters", sanitizeSchema(spec.parameters))
                         }),
                     ),
                 ),
             )
         }
         return body
+    }
+
+    private fun sanitizeSchema(node: Any?): Any? = when (node) {
+        is JSONObject -> JSONObject().apply {
+            for (key in node.keys()) {
+                if (key in GEMINI_SCHEMA_KEYS) {
+                    put(key, sanitizeSchema(node.get(key)))
+                }
+            }
+        }
+        is JSONArray -> JSONArray().apply {
+            for (i in 0 until node.length()) {
+                put(sanitizeSchema(node.get(i)))
+            }
+        }
+        else -> node
     }
 
     private fun findToolName(messages: List<ChatMessage>, toolCallId: String): String {
@@ -563,5 +579,18 @@ class LlmClient(private val settings: SettingsRepository) {
 
     private companion object {
         val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
+
+        val GEMINI_SCHEMA_KEYS = setOf(
+            "type",
+            "description",
+            "properties",
+            "required",
+            "items",
+            "enum",
+            "format",
+            "nullable",
+            "minimum",
+            "maximum",
+        )
     }
 }

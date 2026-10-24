@@ -35,6 +35,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Send
@@ -225,6 +227,9 @@ fun ChatScreen(
                         onValueChange = { input = it },
                         running = state.running,
                         agentName = agentName,
+                        model = model,
+                        modelOptions = modelOptions,
+                        onSelectModel = onSelectModel,
                         onOpenAgents = onOpenAgents,
                         onSend = {
                             onSend(input)
@@ -240,18 +245,6 @@ fun ChatScreen(
                     .fillMaxSize()
                     .padding(innerPadding),
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.Center,
-                ) {
-                    ModelChip(
-                        model = model,
-                        options = modelOptions,
-                        onSelect = onSelectModel,
-                    )
-                }
                 if (totalCount == 0) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -450,6 +443,9 @@ private fun MessageActions(
         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.msg_copy)) },
+                leadingIcon = {
+                    CopyGlyph(tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                },
                 onClick = {
                     menu = false
                     onCopy()
@@ -458,6 +454,14 @@ private fun MessageActions(
             if (onEdit != null) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.msg_edit)) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    },
                     enabled = canModify,
                     onClick = {
                         menu = false
@@ -466,7 +470,20 @@ private fun MessageActions(
                 )
             }
             DropdownMenuItem(
-                text = { Text(stringResource(R.string.msg_delete)) },
+                text = {
+                    Text(
+                        text = stringResource(R.string.msg_delete),
+                        color = DiffDeleteText,
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = DiffDeleteText,
+                    )
+                },
                 enabled = canModify,
                 onClick = {
                     menu = false
@@ -789,7 +806,6 @@ private fun ModelChip(
         Box(
             modifier = Modifier
                 .clip(shape)
-                .background(MaterialTheme.colorScheme.surfaceVariant)
                 .border(
                     width = 1.dp,
                     color = MaterialTheme.colorScheme.outline,
@@ -885,6 +901,9 @@ private fun Composer(
     onValueChange: (String) -> Unit,
     running: Boolean,
     agentName: String,
+    model: String,
+    modelOptions: List<String>,
+    onSelectModel: (String) -> Unit,
     onOpenAgents: () -> Unit,
     onSend: () -> Unit,
     onStop: () -> Unit,
@@ -936,6 +955,12 @@ private fun Composer(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 ModeChip(label = agentName, onClick = onOpenAgents)
+                Spacer(modifier = Modifier.width(6.dp))
+                ModelChip(
+                    model = model,
+                    options = modelOptions,
+                    onSelect = onSelectModel,
+                )
                 Spacer(modifier = Modifier.weight(1f))
                 SendStopButton(
                     running = running,
