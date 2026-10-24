@@ -167,7 +167,7 @@ class AgentSession private constructor(context: Context) {
 
     fun respondQuestion(answer: String?) {
         if (questionGate.hasWaiter()) {
-            questionGate.submit(answer)
+            if (answer == null) questionGate.skip() else questionGate.submit(answer)
             return
         }
         val toolCallId = pendingToolCallId ?: return
