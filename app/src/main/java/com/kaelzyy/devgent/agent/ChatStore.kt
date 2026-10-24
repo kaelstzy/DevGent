@@ -98,8 +98,8 @@ class ChatStore(private val context: Context) {
         return pendingQuestionFromJson(raw)
     }
 
-    private fun historyKey(id: String) = "history_$id"
-    private fun pendingKey(id: String) = "pending_$id"
+    private fun historyKey(id: String) = stringPreferencesKey("history_$id")
+    private fun pendingKey(id: String) = stringPreferencesKey("pending_$id")
 
     private fun parseMetas(raw: String?): List<SessionMeta> {
         if (raw.isNullOrBlank()) return emptyList()

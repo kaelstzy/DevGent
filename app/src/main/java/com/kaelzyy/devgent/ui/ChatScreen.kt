@@ -30,9 +30,9 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Send
@@ -667,6 +667,29 @@ private fun DiffBlock(diff: DiffPreview) {
 }
 
 @Composable
+private fun FolderGlyph() {
+    Box(modifier = Modifier.size(16.dp)) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(11.dp)
+                .clip(RoundedCornerShape(3.dp))
+                .background(AccentBlueLight),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(start = 1.dp)
+                .width(7.dp)
+                .height(4.dp)
+                .clip(RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp))
+                .background(AccentBlueLight),
+        )
+    }
+}
+
+@Composable
 private fun FolderChip(
     label: String,
     active: Boolean,
@@ -691,12 +714,7 @@ private fun FolderChip(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             if (active) {
-                Icon(
-                    imageVector = Icons.Default.Folder,
-                    contentDescription = null,
-                    tint = AccentBlueLight,
-                    modifier = Modifier.size(16.dp),
-                )
+                FolderGlyph()
             }
             Text(
                 text = label,
