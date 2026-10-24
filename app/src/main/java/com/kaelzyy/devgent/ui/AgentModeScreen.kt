@@ -24,7 +24,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
@@ -367,12 +366,7 @@ private fun AgentRow(
             }
             onClone?.let {
                 IconButton(onClick = { it(agent) }) {
-                    Icon(
-                        imageVector = Icons.Default.ContentCopy,
-                        contentDescription = stringResource(R.string.clone_agent),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp),
-                    )
+                    CopyGlyph(tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             onEdit?.let {
@@ -396,6 +390,27 @@ private fun AgentRow(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun CopyGlyph(tint: Color) {
+    Box(modifier = Modifier.size(20.dp)) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .size(12.dp)
+                .clip(RoundedCornerShape(3.dp))
+                .background(tint),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .size(12.dp)
+                .clip(RoundedCornerShape(3.dp))
+                .background(MaterialTheme.colorScheme.surface)
+                .border(1.5.dp, tint, RoundedCornerShape(3.dp)),
+        )
     }
 }
 
