@@ -3,6 +3,7 @@ package com.kaelzyy.devgent.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,6 +42,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -73,7 +76,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -123,6 +128,8 @@ fun ChatScreen(
     onSelectSession: (String) -> Unit,
     onUndoFile: (String) -> Unit,
     onToggleToolSteps: (Int) -> Unit,
+    onDeleteEntry: (Int) -> Unit,
+    onEditEntry: (Int, String) -> Unit,
 ) {
     var input by rememberSaveable { mutableStateOf("") }
     val listState = rememberLazyListState()
@@ -255,8 +262,11 @@ fun ChatScreen(
                                 EntryView(
                                     entry = state.entries[index],
                                     index = index,
+                                    running = state.running,
                                     onRespondPermission = onRespondPermission,
                                     onToggleSteps = onToggleToolSteps,
+                                    onEdit = onEditEntry,
+                                    onDelete = onDeleteEntry,
                                 )
                             } else {
                                 AgentText(text = state.liveText)
@@ -351,28 +361,47 @@ private fun EmptyWorkspace(onSelectFolder: () -> Unit) {
 private fun EntryView(
     entry: ChatEntry,
     index: Int,
+    running: Boolean,
     onRespondPermission: (PermissionDecision) -> Unit,
     onToggleSteps: (Int) -> Unit,
+    onEdit: (Int, String) -> Unit,
+    onDelete: (Int) -> Unit,
 ) {
+    val clipboard = LocalClipboardManager.current
+    val copy: (String) -> Unit = { clipboard.setText(AnnotatedString(it)) }
     when (entry) {
         is ChatEntry.User -> Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End,
         ) {
-            Surface(
-                modifier = Modifier.widthIn(max = 300.dp),
-                shape = RoundedCornerShape(20.dp),
-                color = MaterialTheme.colorScheme.surface,
+            MessageActions(
+                canModify = !running,
+                onCopy = { copy(entry.text) },
+                onEdit = { onEdit(index, entry.text) },
+                onDelete = { onDelete(index) },
             ) {
-                Text(
-                    text = entry.text,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                    style = MessageStyle,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
+                Surface(
+                    modifier = Modifier.widthIn(max = 300.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                ) {
+                    Text(
+                        text = entry.text,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        style = MessageStyle,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
             }
         }
-        is ChatEntry.Agent -> AgentText(text = entry.text)
+        is ChatEntry.Agent -> MessageActions(
+            canModify = !running,
+            onCopy = { copy(entry.text) },
+            onEdit = null,
+            onDelete = { onDelete(index) },
+        ) {
+            AgentText(text = entry.text)
+        }
         is ChatEntry.ToolSteps -> ToolStepsCard(
             entry = entry,
             onToggle = { onToggleSteps(index) },
@@ -387,6 +416,49 @@ private fun EntryView(
             entry = entry,
             onRespond = onRespondPermission,
         )
+    }
+}
+
+@Composable
+private fun MessageActions(
+    canModify: Boolean,
+    onCopy: () -> Unit,
+    onEdit: (() -> Unit)?,
+    onDelete: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    var menu by remember { mutableStateOf(false) }
+    Box(
+        modifier = Modifier.combinedClickable(onClick = {}, onLongClick = { menu = true }),
+    ) {
+        content()
+        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.msg_copy)) },
+                onClick = {
+                    menu = false
+                    onCopy()
+                },
+            )
+            if (onEdit != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.msg_edit)) },
+                    enabled = canModify,
+                    onClick = {
+                        menu = false
+                        onEdit()
+                    },
+                )
+            }
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.msg_delete)) },
+                enabled = canModify,
+                onClick = {
+                    menu = false
+                    onDelete()
+                },
+            )
+        }
     }
 }
 

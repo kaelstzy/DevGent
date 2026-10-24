@@ -106,6 +106,8 @@ private fun MainRoute(onOpenSettings: () -> Unit, onOpenAgents: () -> Unit) {
         onSelectSession = session::openSession,
         onUndoFile = session::undoFile,
         onToggleToolSteps = session::toggleToolSteps,
+        onDeleteEntry = session::deleteFrom,
+        onEditEntry = session::editAndResend,
     )
 }
 

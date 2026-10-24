@@ -79,4 +79,7 @@
     <string name="suggestion_1">Baca struktur project ini</string>
     <string name="suggestion_2">Cari semua TODO di file</string>
     <string name="suggestion_3">Jelaskan isi folder kerja</string>
+    <string name="msg_copy">Salin</string>
+    <string name="msg_edit">Edit</string>
+    <string name="msg_delete">Hapus</string>
 </resources>

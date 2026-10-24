@@ -198,7 +198,7 @@ class ToolExecutor(
                 "Maksimal 3 pertanyaan per panggilan, tiap pertanyaan 2–4 option.",
             parameters = JSONObject()
                 .put("type", "object")
-                .put("required", JSONArray("questions"))
+                .put("required", JSONArray(arrayOf("questions")))
                 .put(
                     "properties",
                     JSONObject().put(

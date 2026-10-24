@@ -216,6 +216,62 @@ class AgentSession private constructor(context: Context) {
         }
     }
 
+    fun deleteFrom(index: Int) {
+        if (_state.value.running || _state.value.entries.getOrNull(index) == null) return
+        scope.launch {
+            val j = job
+            if (j != null) {
+                j.cancel()
+                j.join()
+            }
+            truncateFrom(index)
+        }
+    }
+
+    fun editAndResend(index: Int, newText: String) {
+        val text = newText.trim()
+        if (text.isEmpty() || _state.value.running) return
+        if (_state.value.entries.getOrNull(index) !is ChatEntry.User) return
+        scope.launch {
+            val j = job
+            if (j != null) {
+                j.cancel()
+                j.join()
+            }
+            truncateFrom(index)
+            send(text)
+        }
+    }
+
+    private suspend fun truncateFrom(entryIndex: Int) {
+        val entries = _state.value.entries
+        val start = (entryIndex downTo 0).firstOrNull { entries[it] is ChatEntry.User } ?: 0
+        val usersBefore = entries.take(start).count { it is ChatEntry.User }
+        var seen = 0
+        var cut = history.size
+        for ((i, message) in history.withIndex()) {
+            if (message is ChatMessage.User) {
+                if (seen == usersBefore) {
+                    cut = i
+                    break
+                }
+                seen++
+            }
+        }
+        history.removeRange(cut, history.size)
+        val pendingId = pendingToolCallId
+        if (pendingId != null &&
+            history.none { m -> m is ChatMessage.Assistant && m.toolCalls.any { c -> c.id == pendingId } }
+        ) {
+            pendingToolCallId = null
+            questionGate.clearPending()
+            storeSavePending(null)
+        }
+        _state.update { s -> s.copy(entries = s.entries.take(start)) }
+        val id = sessionId
+        if (id.isNotEmpty()) store.saveHistory(id, history.toList())
+    }
+
     private suspend fun restoreSession(id: String) {
         val stored = store.loadHistory(id)
         if (stored.isNotEmpty()) {
