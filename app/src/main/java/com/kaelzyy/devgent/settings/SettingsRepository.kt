@@ -14,11 +14,21 @@ data class AppSettings(
     val hasApiKey: Boolean,
     val baseUrl: String,
     val model: String,
+    val provider: String,
+    val reasoning: String,
 ) {
     companion object {
         const val DEFAULT_BASE_URL = "https://api.openai.com/v1"
         const val DEFAULT_MODEL = "gpt-4o-mini"
-        val DEFAULT = AppSettings(hasApiKey = false, baseUrl = DEFAULT_BASE_URL, model = DEFAULT_MODEL)
+        const val DEFAULT_PROVIDER = "openai"
+        const val DEFAULT_REASONING = "off"
+        val DEFAULT = AppSettings(
+            hasApiKey = false,
+            baseUrl = DEFAULT_BASE_URL,
+            model = DEFAULT_MODEL,
+            provider = DEFAULT_PROVIDER,
+            reasoning = DEFAULT_REASONING,
+        )
     }
 }
 
@@ -29,6 +39,8 @@ class SettingsRepository(private val context: Context) {
             hasApiKey = prefs[KEY_API_KEY]?.isNotEmpty() == true,
             baseUrl = prefs[KEY_BASE_URL] ?: AppSettings.DEFAULT_BASE_URL,
             model = prefs[KEY_MODEL] ?: AppSettings.DEFAULT_MODEL,
+            provider = prefs[KEY_PROVIDER] ?: AppSettings.DEFAULT_PROVIDER,
+            reasoning = prefs[KEY_REASONING] ?: AppSettings.DEFAULT_REASONING,
         )
     }
 
@@ -61,9 +73,23 @@ class SettingsRepository(private val context: Context) {
         context.settingsDataStore.edit { it[KEY_MODEL] = trimmed }
     }
 
+    suspend fun saveProvider(id: String) {
+        val trimmed = id.trim()
+        if (trimmed.isEmpty()) return
+        context.settingsDataStore.edit { it[KEY_PROVIDER] = trimmed }
+    }
+
+    suspend fun saveReasoning(value: String) {
+        val trimmed = value.trim()
+        if (trimmed.isEmpty()) return
+        context.settingsDataStore.edit { it[KEY_REASONING] = trimmed }
+    }
+
     private companion object {
         val KEY_API_KEY = stringPreferencesKey("api_key_encrypted")
         val KEY_BASE_URL = stringPreferencesKey("base_url")
         val KEY_MODEL = stringPreferencesKey("model")
+        val KEY_PROVIDER = stringPreferencesKey("provider")
+        val KEY_REASONING = stringPreferencesKey("reasoning")
     }
 }

@@ -2,6 +2,7 @@ package com.kaelzyy.devgent.ui
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,8 +14,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,6 +48,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.kaelzyy.devgent.R
 import com.kaelzyy.devgent.llm.LlmClient
+import com.kaelzyy.devgent.llm.Providers
 import com.kaelzyy.devgent.settings.AppSettings
 import com.kaelzyy.devgent.settings.SettingsRepository
 import com.kaelzyy.devgent.ui.theme.DiffAddText
@@ -70,6 +75,18 @@ fun SettingsScreen(
     var testOk by rememberSaveable { mutableStateOf(false) }
     var testMessage by rememberSaveable { mutableStateOf("") }
     var testLoading by rememberSaveable { mutableStateOf(false) }
+    var providerMenu by remember { mutableStateOf(false) }
+    var modelMenu by remember { mutableStateOf(false) }
+    var reasoningMenu by remember { mutableStateOf(false) }
+
+    val preset = Providers.byId(settings.provider)
+    val reasoningLabel = when (settings.reasoning) {
+        "minimal" -> stringResource(R.string.reasoning_minimal)
+        "low" -> stringResource(R.string.reasoning_low)
+        "medium" -> stringResource(R.string.reasoning_medium)
+        "high" -> stringResource(R.string.reasoning_high)
+        else -> stringResource(R.string.reasoning_off)
+    }
 
     val msgKeyOk = stringResource(R.string.key_save_ok)
     val msgKeyFail = stringResource(R.string.key_save_fail)
@@ -115,6 +132,49 @@ fun SettingsScreen(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            Box {
+                OutlinedTextField(
+                    value = preset.label,
+                    onValueChange = {},
+                    readOnly = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(stringResource(R.string.provider_label)) },
+                    trailingIcon = {
+                        IconButton(onClick = { providerMenu = !providerMenu }) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    },
+                    singleLine = true,
+                )
+                DropdownMenu(
+                    expanded = providerMenu,
+                    onDismissRequest = { providerMenu = false },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Providers.PRESETS.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option.label) },
+                            onClick = {
+                                providerMenu = false
+                                scope.launch { repository.saveProvider(option.id) }
+                                if (option.baseUrl.isNotEmpty()) {
+                                    baseUrl = option.baseUrl
+                                    scope.launch { repository.saveBaseUrl(option.baseUrl) }
+                                }
+                                if (option.models.isNotEmpty()) {
+                                    model = option.models.first()
+                                    scope.launch { repository.saveModel(option.models.first()) }
+                                }
+                            },
+                        )
+                    }
+                }
+            }
+
             OutlinedTextField(
                 value = keyInput,
                 onValueChange = { keyInput = it },
@@ -215,18 +275,98 @@ fun SettingsScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
             )
 
-            OutlinedTextField(
-                value = model,
-                onValueChange = {
-                    model = it
-                    scope.launch { repository.saveModel(it) }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.model_label)) },
-                placeholder = { Text(stringResource(R.string.model_hint)) },
-                supportingText = { Text(stringResource(R.string.model_hint)) },
-                singleLine = true,
-            )
+            Box {
+                OutlinedTextField(
+                    value = model,
+                    onValueChange = {
+                        model = it
+                        scope.launch { repository.saveModel(it) }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(stringResource(R.string.model_label)) },
+                    placeholder = { Text(stringResource(R.string.model_hint)) },
+                    supportingText = { Text(stringResource(R.string.model_hint)) },
+                    singleLine = true,
+                    trailingIcon = {
+                        if (preset.models.isNotEmpty()) {
+                            IconButton(onClick = { modelMenu = !modelMenu }) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowDropDown,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    },
+                )
+                if (preset.models.isNotEmpty()) {
+                    DropdownMenu(
+                        expanded = modelMenu,
+                        onDismissRequest = { modelMenu = false },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        preset.models.forEach { option ->
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = option,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+                                },
+                                onClick = {
+                                    modelMenu = false
+                                    model = option
+                                    scope.launch { repository.saveModel(option) }
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (preset.supportsReasoning) {
+                Box {
+                    OutlinedTextField(
+                        value = reasoningLabel,
+                        onValueChange = {},
+                        readOnly = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text(stringResource(R.string.reasoning_label)) },
+                        trailingIcon = {
+                            IconButton(onClick = { reasoningMenu = !reasoningMenu }) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowDropDown,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        },
+                        singleLine = true,
+                    )
+                    DropdownMenu(
+                        expanded = reasoningMenu,
+                        onDismissRequest = { reasoningMenu = false },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Providers.REASONING_LEVELS.forEach { level ->
+                            val label = when (level) {
+                                "minimal" -> stringResource(R.string.reasoning_minimal)
+                                "low" -> stringResource(R.string.reasoning_low)
+                                "medium" -> stringResource(R.string.reasoning_medium)
+                                "high" -> stringResource(R.string.reasoning_high)
+                                else -> stringResource(R.string.reasoning_off)
+                            }
+                            DropdownMenuItem(
+                                text = { Text(label) },
+                                onClick = {
+                                    reasoningMenu = false
+                                    scope.launch { repository.saveReasoning(level) }
+                                },
+                            )
+                        }
+                    }
+                }
+            }
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Button(

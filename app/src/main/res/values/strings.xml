@@ -82,4 +82,11 @@
     <string name="msg_copy">Salin</string>
     <string name="msg_edit">Edit</string>
     <string name="msg_delete">Hapus</string>
+    <string name="provider_label">Provider AI</string>
+    <string name="reasoning_label">Reasoning effort</string>
+    <string name="reasoning_off">Mati</string>
+    <string name="reasoning_minimal">Minimal</string>
+    <string name="reasoning_low">Rendah</string>
+    <string name="reasoning_medium">Sedang</string>
+    <string name="reasoning_high">Tinggi</string>
 </resources>

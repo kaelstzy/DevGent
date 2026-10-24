@@ -113,6 +113,9 @@ fun ChatScreen(
     state: ChatState,
     folderName: String?,
     agentName: String,
+    model: String,
+    modelOptions: List<String>,
+    onSelectModel: (String) -> Unit,
     pendingQuestion: QuestionPayload?,
     sessions: List<SessionMeta>,
     activeSessionId: String,
@@ -237,6 +240,18 @@ fun ChatScreen(
                     .fillMaxSize()
                     .padding(innerPadding),
             ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    ModelChip(
+                        model = model,
+                        options = modelOptions,
+                        onSelect = onSelectModel,
+                    )
+                }
                 if (totalCount == 0) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -763,12 +778,72 @@ private fun FolderGlyph() {
 }
 
 @Composable
+private fun ModelChip(
+    model: String,
+    options: List<String>,
+    onSelect: (String) -> Unit,
+) {
+    var menu by remember { mutableStateOf(false) }
+    val shape = RoundedCornerShape(50)
+    Box {
+        Box(
+            modifier = Modifier
+                .clip(shape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outline,
+                    shape = shape,
+                )
+                .clickable(enabled = options.isNotEmpty()) { menu = true }
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = model,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontFamily = FontFamily.Monospace,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                )
+                if (options.isNotEmpty()) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = option,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontFamily = FontFamily.Monospace,
+                        )
+                    },
+                    onClick = {
+                        menu = false
+                        onSelect(option)
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun FolderChip(
     label: String,
     active: Boolean,
     onClick: () -> Unit,
-) {
-    val shape = RoundedCornerShape(50)
+) {    val shape = RoundedCornerShape(50)
     Box(
         modifier = Modifier
             .clip(shape)

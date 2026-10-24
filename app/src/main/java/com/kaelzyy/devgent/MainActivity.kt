@@ -20,6 +20,8 @@ import com.kaelzyy.devgent.agent.AgentRepository
 import com.kaelzyy.devgent.agent.AgentSession
 import com.kaelzyy.devgent.agent.BUILT_IN_AGENTS
 import com.kaelzyy.devgent.llm.LlmClient
+import com.kaelzyy.devgent.llm.Providers
+import com.kaelzyy.devgent.settings.AppSettings
 import com.kaelzyy.devgent.settings.SettingsRepository
 import com.kaelzyy.devgent.ui.AgentModeScreen
 import com.kaelzyy.devgent.ui.ChatScreen
@@ -67,6 +69,7 @@ private fun MainRoute(onOpenSettings: () -> Unit, onOpenAgents: () -> Unit) {
     val workspace = remember { WorkspaceRepository(context.applicationContext) }
     val session = remember { AgentSession.get(context) }
     val scope = rememberCoroutineScope()
+    val settingsRepository = remember { SettingsRepository(context.applicationContext) }
 
     val state by session.state.collectAsState()
     val workspaceUri by workspace.workspaceUri.collectAsState(initial = null)
@@ -75,6 +78,7 @@ private fun MainRoute(onOpenSettings: () -> Unit, onOpenAgents: () -> Unit) {
     val sessions by session.sessions.collectAsState(initial = emptyList())
     val activeSessionId by session.activeSessionId.collectAsState()
     val changedFiles by session.changedFiles.collectAsState()
+    val appSettings by settingsRepository.appSettings.collectAsState(initial = AppSettings.DEFAULT)
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree(),
@@ -91,6 +95,9 @@ private fun MainRoute(onOpenSettings: () -> Unit, onOpenAgents: () -> Unit) {
         state = state,
         folderName = folderName,
         agentName = activeAgent.name,
+        model = appSettings.model,
+        modelOptions = Providers.byId(appSettings.provider).models,
+        onSelectModel = { selected -> scope.launch { settingsRepository.saveModel(selected) } },
         pendingQuestion = pendingQuestion,
         sessions = sessions,
         activeSessionId = activeSessionId,
