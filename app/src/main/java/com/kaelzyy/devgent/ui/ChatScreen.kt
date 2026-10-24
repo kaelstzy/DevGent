@@ -46,7 +46,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalDrawer
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -134,7 +134,7 @@ fun ChatScreen(
         if (totalCount > 0) listState.scrollToItem(totalCount - 1)
     }
 
-    ModalDrawer(
+    ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
             SessionDrawer(
