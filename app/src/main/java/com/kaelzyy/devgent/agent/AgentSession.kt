@@ -258,7 +258,7 @@ class AgentSession private constructor(context: Context) {
                 seen++
             }
         }
-        history.removeRange(cut, history.size)
+        history.subList(cut, history.size).clear()
         val pendingId = pendingToolCallId
         if (pendingId != null &&
             history.none { m -> m is ChatMessage.Assistant && m.toolCalls.any { c -> c.id == pendingId } }
